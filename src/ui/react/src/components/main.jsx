@@ -33,6 +33,37 @@
             editor.on('editorInteraction', this._onEditorInteraction, this);
             editor.on('actionPerformed', this._onActionPerformed, this);
             editor.on('key', this._onEditorKey, this);
+
+            this._onDocInteractTask = CKEDITOR.tools.debounce(this._onDocInteract, 50, this);
+
+            document.addEventListener('mousedown', this._onDocInteractTask);
+            document.addEventListener('keydown', this._onDocInteractTask);
+        },
+
+        /**
+         * Lifecycle. Invoked immediately before a component is unmounted from the DOM.
+         */
+        componentWillUnmount: function () {
+            this._onDocInteractTask.detach();
+
+            document.removeEventListener('mousedown', this._onDocInteractTask);
+            document.removeEventListener('keydown', this._onDocInteractTask);
+        },
+
+        /**
+         * Lifecycle. Invoked before rendering when new props or state are being received.
+         * This method is not called for the initial render or when forceUpdate is used.
+         *
+         * @param {Object} nextProps The new properties of the component.
+         * @param {Object} nextState The new state of the component.
+         * @return {Boolean} True if the component should update its UI, false otherwise
+         */
+        shouldComponentUpdate: function(nextProps, nextState) {
+            // Prevent updating if the editor's UI starts to interact with the editor.
+            // For example, this may happen when he clicks outside the editor and then
+            // clicks inside. In this case there is no need to update, instead we will wait
+            // for editorInteraction event to do the job.
+            return !(this.state.hidden && !nextState.hidden);
         },
 
         /**
@@ -60,8 +91,14 @@
                 return React.createElement(toolbar, props);
             }.bind(this));
 
+            var className = 'alloy-editor-toolbars';
+
+            if (this.state.hidden) {
+                className += ' hidden';
+            }
+
             return (
-                <div className="alloy-editor-toolbars" onKeyDown={this.handleKey}>
+                <div className={className} onKeyDown={this.handleKey}>
                     {toolbars}
                 </div>
             );
@@ -111,6 +148,27 @@
             if (nativeEvent.altKey && nativeEvent.keyCode === 121) {
                 this.focus();
             }
+        },
+
+        /**
+         * Check if the active element in the document is the editable area or it is
+         * part of the editor's UI
+         *
+         * @method _onDocInteract
+         * @protected
+         * @param {SynteticEvent} event The received event as result of user's interaction
+         */
+        _onDocInteract: function(event) {
+            var nodeEl = new CKEDITOR.dom.element(React.findDOMNode(this));
+
+            var targetNode = new CKEDITOR.dom.node(document.activeElement);
+            var editable = this.props.editor.get('nativeEditor').editable();
+            var hidden = !(editable.$ === document.activeElement || editable.contains(targetNode, true) ||
+                nodeEl.contains(targetNode));
+
+            this.setState({
+                hidden: hidden
+            });
         }
     });
 
