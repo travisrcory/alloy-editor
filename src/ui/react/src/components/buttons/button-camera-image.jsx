@@ -27,15 +27,6 @@
         },
 
         /**
-         * Lifecycle. Invoked once, only on the client, immediately after the initial rendering occurs.
-         *
-         * Focuses the take photo button.
-         */
-        componentDidMount: function () {
-            React.findDOMNode(this.refs.buttonTakePhoto).focus();
-        },
-
-        /**
          * Lifecycle. Invoked immediately before a component is unmounted from the DOM.
          */
         componentWillUnmount: function() {

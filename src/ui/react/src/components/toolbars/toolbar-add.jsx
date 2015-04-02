@@ -47,39 +47,22 @@
         },
 
         /**
+         * Lifecycle. Invoked once, only on the client (not on the server),
+         * immediately after the initial rendering occurs.
+         */
+        componentDidMount: function () {
+            this._updatePosition();
+        },
+
+        /**
          * Lifecycle. Invoked immediately after the component's updates are flushed to the DOM.
+         * This method is not called for the initial render.
          *
-         * @param {provProps} prevProps The previous state of the component's properties.
-         * @param {[type]} prevState The previous component's state.
+         * @param {Object} prevProps The previous state of the component's properties.
+         * @param {Object} prevState Component's previous state.
          */
         componentDidUpdate: function (prevProps, prevState) {
-            var region;
-
-            if (this.props.renderExclusive) {
-                this.updatePosition();
-                this.show();
-
-            } else {
-                if (this.props.selectionData) {
-                    region = this.props.selectionData.region;
-                }
-
-                if (region) {
-                    var domNode = React.findDOMNode(this);
-                    var domElement = new CKEDITOR.dom.element(domNode);
-
-                    var startRect = region.startRect || region;
-                    var left = this.props.editor.get('nativeEditor').editable().getClientRect().left;
-
-                    domNode.style.left = left - domNode.offsetWidth - this.props.gutterExclusive.left + 'px';
-                    domNode.style.top = region.top - domNode.offsetHeight/2 + startRect.height/2 + 'px';
-                    domNode.style.opacity = 1;
-
-                    domElement.removeClass('alloy-editor-arrow-box');
-
-                    this.cancelAnimation();
-                }
-            }
+            this._updatePosition();
         },
 
         /**
@@ -142,6 +125,42 @@
             }
 
             return cssClass;
+        },
+
+        /**
+         * Calculates and sets the position of the toolbar in exclusive or normal mode.
+         *
+         * @protected
+         * @method _updatePosition
+         */
+        _updatePosition: function() {
+            var region;
+
+            if (this.props.renderExclusive) {
+                this.updatePosition();
+                this.show();
+
+            } else {
+                if (this.props.selectionData) {
+                    region = this.props.selectionData.region;
+                }
+
+                if (region) {
+                    var domNode = React.findDOMNode(this);
+                    var domElement = new CKEDITOR.dom.element(domNode);
+
+                    var startRect = region.startRect || region;
+                    var left = this.props.editor.get('nativeEditor').editable().getClientRect().left;
+
+                    domNode.style.left = left - domNode.offsetWidth - this.props.gutterExclusive.left + 'px';
+                    domNode.style.top = region.top - domNode.offsetHeight/2 + startRect.height/2 + 'px';
+                    domNode.style.opacity = 1;
+
+                    domElement.removeClass('alloy-editor-arrow-box');
+
+                    this.cancelAnimation();
+                }
+            }
         }
     });
 
